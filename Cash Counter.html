@@ -1,0 +1,412 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Colorful Cash Tracker</title>
+  <style>
+    * {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #1e2a2d 0%, #2f3e2c 100%);
+  min-height: 100vh;
+  color: #f5f5f5;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5em;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% {opacity: 0; transform: translateY(-20px);}
+  100% {opacity: 1; transform: translateY(0);}
+}
+
+.container {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.glass {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 1s ease-in-out;
+}
+
+.borrowed-section {
+  flex: 1;
+  min-width: 300px;
+}
+
+.borrowed-section h3 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #e0e0e0;
+}
+
+.borrowed-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.borrowed-row input {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(40,40,40,0.9);
+  color: #f5f5f5;
+}
+
+.borrowed-row input::placeholder {
+  color: #aaa;
+}
+
+.cash-section {
+  flex: 1.5;
+  min-width: 400px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+th {
+  background: #4b2e68;
+  color: #fff;
+  font-weight: bold;
+}
+
+td {
+  color: #eaeaea;
+  background: rgba(0,0,0,0.35);
+}
+
+tr:nth-child(even) td {
+  background: rgba(255,255,255,0.05);
+}
+
+input[type="number"] {
+  width: 70px;
+  padding: 6px;
+  text-align: center;
+  border-radius: 6px;
+  border: none;
+  background: rgba(40,40,40,0.9);
+  color: #f5f5f5;
+}
+
+button {
+  margin: 10px 5px 0 0;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #4b2e68;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: 0.25s;
+}
+
+button:hover {
+  background: #3a2452;
+  transform: translateY(-2px);
+}
+
+#results {
+  margin-top: 30px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  font-size: 1.15em;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  color: #fff;
+}
+
+.input-group {
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  font-weight: bold;
+  margin-right: 10px;
+  font-size: 1.1em;
+}
+
+.input-group input {
+  padding: 8px;
+  width: 160px;
+  font-size: 1em;
+  text-align: right;
+  border-radius: 8px;
+  border: none;
+  background: rgba(40,40,40,0.9);
+  color: #f5f5f5;
+}
+
+#saveStatus {
+  margin-top: 20px;
+  color: #10b981;
+  font-weight: bold;
+  text-align: center;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+<h1> Cash & Udhar Tracker</h1>
+
+<div class="input-group">
+  <label for="manualAmount">Manual Amount (₹):</label>
+  <input type="number" id="manualAmount" value="0" min="0" />
+</div>
+
+<div class="container">
+  <div class="borrowed-section glass">
+    <h3>Borrowed List</h3>
+    <div id="borrowList"></div>
+  </div>
+
+  <div class="cash-section glass">
+    <table>
+      <thead>
+        <tr>
+          <th>Denomination</th>
+          <th>Quantity</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="cashTable"></tbody>
+    </table>
+    <button onclick="exportToExcel()">Export to Excel</button>
+    <button onclick="window.print()">Print / Export to PDF</button>
+  </div>
+</div>
+
+<div id="results" class="glass">
+  <div><strong>Manual Amount:</strong> ₹<span id="manualDisplay">0</span></div>
+  <div><strong>Total Cash Count:</strong> ₹<span id="countedTotal">0</span></div>
+  <div><strong>Total Borrowed (Udhar):</strong> ₹<span id="udharTotal">0</span></div>
+  <div><strong>Remaining Balance:</strong> ₹<span id="difference">0</span></div>
+</div>
+
+<div id="saveStatus">✅ Data auto-saved</div>
+
+<audio id="saveSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3" preload="auto"></audio>
+
+<script>
+  const denominations = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+  const cashTable = document.getElementById('cashTable');
+  const manualInput = document.getElementById('manualAmount');
+  const saveStatus = document.getElementById('saveStatus');
+  const saveSound = document.getElementById('saveSound');
+  let lastManualAmount = 0;
+
+  function showSaveStatus() {
+    saveStatus.style.display = 'block';
+    saveSound.play();
+    clearTimeout(showSaveStatus.timer);
+    showSaveStatus.timer = setTimeout(() => {
+      saveStatus.style.display = 'none';
+    }, 1500);
+  }
+
+  function saveToLocal() {
+    const data = {
+      manualAmount: parseInt(manualInput.value) || 0,
+      denominations: {},
+      borrowed: []
+    };
+
+    document.querySelectorAll('#cashTable tr').forEach(row => {
+      const input = row.querySelector('input');
+      if (input) {
+        const qty = parseInt(input.value) || 0;
+        const value = input.dataset.value;
+        data.denominations[value] = qty;
+      }
+    });
+
+    document.querySelectorAll(".borrowed-row").forEach(row => {
+      const name = row.querySelector('input[type="text"]').value.trim();
+      const amount = parseInt(row.querySelector('input[type="number"]').value) || 0;
+      if (name || amount) {
+        data.borrowed.push({ name, amount });
+      }
+    });
+
+    localStorage.setItem("cashAppData", JSON.stringify(data));
+    showSaveStatus();
+  }
+
+  function loadFromLocal() {
+    const saved = localStorage.getItem("cashAppData");
+    if (!saved) return;
+
+    const data = JSON.parse(saved);
+    manualInput.value = data.manualAmount || 0;
+    lastManualAmount = data.manualAmount || 0;
+
+    document.querySelectorAll('#cashTable tr').forEach(row => {
+      const input = row.querySelector('input');
+      if (input) {
+        const value = input.dataset.value;
+        input.value = data.denominations[value] || 0;
+      }
+    });
+
+    const borrowedInputs = document.querySelectorAll(".borrowed-row");
+    borrowedInputs.forEach((row, index) => {
+      const nameInput = row.querySelector('input[type="text"]');
+      const amountInput = row.querySelector('input[type="number"]');
+      const entry = data.borrowed[index];
+      if (entry) {
+        nameInput.value = entry.name;
+        amountInput.value = entry.amount;
+      } else {
+        nameInput.value = "";
+        amountInput.value = 0;
+      }
+    });
+
+    calculateTotal();
+  }
+
+  function calculateTotal() {
+    const manualAmount = parseInt(manualInput.value) || 0;
+    let countedTotal = 0;
+
+    document.querySelectorAll('#cashTable tr').forEach(row => {
+      const input = row.querySelector('input');
+      const totalCell = row.querySelector('.line-total');
+      if (input) {
+        const qty = parseInt(input.value) || 0;
+        const val = parseInt(input.dataset.value);
+        const lineTotal = qty * val;
+        totalCell.textContent = `₹${lineTotal}`;
+        countedTotal += lineTotal;
+      }
+    });
+
+    let udharTotal = 0;
+    document.querySelectorAll('.borrowed-row input[type="number"]').forEach(input => {
+      udharTotal += parseInt(input.value) || 0;
+    });
+
+    const remaining = manualAmount - countedTotal - udharTotal;
+
+    document.getElementById("manualDisplay").innerText = manualAmount;
+    document.getElementById("countedTotal").innerText = countedTotal;
+    document.getElementById("udharTotal").innerText = udharTotal;
+    document.getElementById("difference").innerText = remaining;
+  }
+
+  denominations.forEach(value => {
+    const row = document.createElement('tr');
+    const denoCell = document.createElement('td');
+    denoCell.textContent = `₹${value}`;
+    const qtyCell = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.value = '0';
+    input.dataset.value = value;
+    input.addEventListener('input', () => {
+      calculateTotal();
+      saveToLocal();
+    });
+    qtyCell.appendChild(input);
+    const totalCell = document.createElement('td');
+    totalCell.textContent = '₹0';
+    totalCell.classList.add('line-total');
+    row.appendChild(denoCell);
+    row.appendChild(qtyCell);
+    row.appendChild(totalCell);
+    cashTable.appendChild(row);
+  });
+
+  const borrowList = document.getElementById("borrowList");
+  for (let i = 0; i < 15; i++) {
+    const row = document.createElement("div");
+    row.classList.add("borrowed-row");
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "Name";
+    const amountInput = document.createElement("input");
+    amountInput.type = "number";
+    amountInput.placeholder = "₹0";
+    amountInput.value = "0";
+
+    nameInput.addEventListener("input", () => { calculateTotal(); saveToLocal(); });
+    amountInput.addEventListener("input", () => { calculateTotal(); saveToLocal(); });
+
+    row.appendChild(nameInput);
+    row.appendChild(amountInput);
+    borrowList.appendChild(row);
+  }
+
+  manualInput.addEventListener('change', () => {
+    const entered = parseInt(manualInput.value) || 0;
+    if (entered !== lastManualAmount) {
+      const password = prompt("Enter password to change manual amount:");
+      if (password !== "27102007") {
+        alert("Incorrect password! Reverting value.");
+        manualInput.value = lastManualAmount;
+        return;
+      }
+      lastManualAmount = entered;
+    }
+    calculateTotal();
+    saveToLocal();
+  });
+
+  function exportToExcel() {
+    const table = document.querySelector("table");
+    const wb = XLSX.utils.table_to_book(table);
+    XLSX.writeFile(wb, "CashTracker.xlsx");
+  }
+
+  loadFromLocal();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+</body>
+</html>
